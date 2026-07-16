@@ -1,0 +1,124 @@
+import random,time
+
+
+class Karakter: # cetak untuk karakter ninja sekaligus apa saja yang bisa dilakukan karakter
+    def __init__(self,nama,darah,shield,chakra,damage):
+        self.nama = nama
+        self.hp = darah
+        self.shield = shield
+        self.chakra = chakra
+        self.max_hp = darah # beberapa fungsi nantinya akan butuh max darah
+        self.max_chakra = chakra # bererapa fungsi nantinya akan butuh max chakra
+        self.damage = damage
+
+
+
+    def kondisi(self): # untuk mengecek kondisi karakter
+        total_hp = self.hp + self.shield
+        print(f"Nama : {self.nama} | HP : {total_hp} | Darah : {self.hp} | Shield : {self.shield} | Chakra : {self.chakra}")
+
+
+    def terima_damage(self,dmg): # fungsi menerima damage. Saya pisahkan karena ada mekanisme perisai juga
+        if self.shield > 0: # jika masih ada perisai
+            if dmg <= self.shield: # jika jumlah damage sama atau kurang dari darah perisai,kurangi saja darah perisai dengan jumlah damage lalu buat damage menjadi 0
+                # kondisi ini mungkin terjadi pada serangan awal tiap karakter
+                self.shield -= dmg
+                dmg = 0
+            else: # jika ternyata damage lebih besar dari darah perisai,kurangi damage dengan darah perisai tersisa
+                dmg -= self.shield
+                self.shield = 0 # buat darah perisai 0,tandanya damage selanjutnya akan mengikis darah asli
+
+        # jika perisai sudah hancur dan damage masih tersisa dari logika di atas
+        if dmg > 0:
+            self.hp = max(0,self.hp - dmg) # ini adalah cara saya menjaga darah karakter tidak minus
+
+    def serangan(self,lawan): #fungsi menyerang karakter
+        if self.hp <= 0: # jika sudah gugur tentu tidak bisa menyerang(jujur saja ini kurang berguna)
+            print(f"{self.nama} telah kalah!")
+            return
+
+        indikator = random.randint(1,3) # indikator untuk memunculkan serangan critical
+        damage_skil = random.randint(1,2) # indikator untuk mengeluarkan damage skill
+
+        if damage_skil == 1 and self.chakra >= 100: # persyaratan skill
+            print(f" 💥 {self.nama} memberikan damaga skil ke {lawan.nama}")
+            damage = self.damage*3 # damage menjadi 3x lipat. Saya simpan di dalam variabel damage karena masih ada kemungkinan damage skill tidak muncul
+            self.chakra -= 100
+            lawan.terima_damage(damage) # jika memang muncul,langsung saja panggil lawan dan fungsi terima_damage
+            print(f"Damage diterima {lawan.nama} : {damage}")
+            lawan.kondisi()
+            print('=' * 80)
+            return
+        if indikator == 3: # persyaratan critical damage
+            print(f" 🔥 {self.nama} memberikan damage critical ke {lawan.nama}")
+            damage = self.damage*2 # damage 2x lipat. Saya simpan di dalam variabel damage juga
+        else:
+            print(f" ⚔️ {self.nama} memberikan damage normal ke {lawan.nama}")
+            damage = self.damage # damage normal
+
+        # kenapa saya simpan di dalam variabel yang sama tiap tipe damagenya? Karena 1 kali pemanggilan fungsi ini hanya bisa menghasilkan 1 tipe serangan. Jadi serangan mana pun(normal,skill,critical) cukup disimpan dalam 1 variabel saja
+
+        lawan.terima_damage(damage) # masukkan damage ke fungsi terima_damage
+        print(f"Damage diterima {lawan.nama} : {damage}")
+        lawan.kondisi()
+        print('='*80)
+
+    def heal(self): # mekanisme heal karakter
+        indikator = random.randint(1,2) # saya acak juga
+        if indikator == 2:
+            if self.hp <= 0:
+                print(f"{self.nama} telah gugur!")
+                return
+            # bonus heal yang bisa didapat karakter
+            bonus_hp = round(self.hp/2) # 50% dari darah saat ini
+            bonus_chakra = round(self.chakra/5) # 20% dari darah saat ini
+
+            # ini adalah logika saya untuk menentukan berapa darah dan chakra yang masuk(baris 77-84) juga memastikan agar darah dan chakra tidak melewati batas maksimal
+            darah_sekarang = self.hp
+            chakra_sekarang = self.chakra
+
+            self.hp = min(self.max_hp,self.hp + bonus_hp) # inilah kegunaan variabel max_hp tadi
+            self.chakra = min(self.max_chakra,self.chakra + bonus_chakra) # inilah kegunaan variabel max_chakra tadi
+
+            heal_hp = self.hp - darah_sekarang
+            heal_chakra = self.chakra - chakra_sekarang
+
+            print(f' ➕ {self.nama} melakukan healing...')
+            print(f"Darah:{heal_hp} | Chakra:{heal_chakra} kembali")
+            print('='*80)
+
+
+# area berjalannya ujian chunnin
+# Saya gunakan time.sleep agar tidak terlalu cepat prosesnya
+char1 = Karakter(nama="Uzumaki Naruto",darah=3000,shield=1200,chakra=1000,damage=600)
+char2 = Karakter(nama="Hyuga Neji",darah=3200,shield=1000,chakra=400,damage=400)
+print("="*21,"ARENA CHUNNIN KONOHAGAKURE",'='*21)
+char1.kondisi()
+char2.kondisi()
+print('='*70)
+print()
+time.sleep(3)
+print("MULAI".center(70))
+time.sleep(2)
+
+while True:
+    char1.serangan(char2)
+    time.sleep(3)
+    char2.heal()
+    time.sleep(2)
+    if char2.hp<=0:
+        print(f" 💀 {char2.nama} gugur! {char1.nama} MENANG!💪")
+        char1.kondisi()
+        break
+
+    char2.serangan(char1)
+    time.sleep(3)
+    char1.heal()
+    time.sleep(2)
+    if char1.hp<=0:
+        print(f" 💀 {char1.nama} gugur! {char2.nama} MENANG!💪")
+        char2.kondisi()
+        break
+
+# Naruto unggul. Sebenarnya yang paling menentukan kemenangan adalah darah dan damage,sedikit gacha.
+
