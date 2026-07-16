@@ -1,0 +1,276 @@
+import json
+import os
+
+# Deteksi folder project agar file JSON terbuat di tempat yang benar
+FOLDER_PROJECT = os.path.dirname(os.path.abspath(__file__))
+FILE_SISWA = os.path.join(FOLDER_PROJECT, "data siswa.json")
+FILE_BUKU = os.path.join(FOLDER_PROJECT, "data buku.json")
+
+
+class Siswa: # Cetak untuk objek siswa
+    def __init__(self, nama, kelas): # objek siswa punya 2 argumen dan 2 default atribut
+        self.nama = nama.title()
+        self.kelas = kelas
+        self.pinjaman = []
+        self.limit = 2
+
+
+class Buku: # Cetak untuk objek buku
+    def __init__(self, judul, stok, penulis): # objek buku punya 3 argumen artibut
+        self.judul = judul.title()
+        self.penulis = penulis.title()
+        self.stok = stok
+
+
+class Perpus: # cetak untuk perpustakaan dan semua fiturnya
+    def __init__(self, nama):
+        self.nama = nama.title()
+        self.daftar_siswa = [] # setiap objek siswa disimpan di sini
+        self.daftar_buku = []  # setiap objek buku disimpan di sini
+
+    def tambah_siswa(self, nama, kelas): # fungsi untuk memasukkan objek siswa ke list perpustakaan(nantinya hanya siswa yang terdaftar yang boleh meminjam buku)
+        for siswa in self.daftar_siswa:
+            if siswa.nama == nama and siswa.kelas == kelas: # untuk mencegah objek yang sama masuk 2x
+                print(f"⚠️ Siswa bernama {nama} di kelas {kelas} sudah terdaftar!")
+                return siswa
+
+        siswa_baru = Siswa(nama, kelas) # di fungsi ini juga saya membuat objek siswa
+        self.daftar_siswa.append(siswa_baru)
+        self.simpan_data_siswa() # disimpan
+
+        #konfirmasi keberhasilan
+        print(f"🟢 Sukses mendaftarkan siswa: {siswa_baru.nama} ({siswa_baru.kelas})")
+        return siswa_baru
+
+    def tambah_buku(self, judul, stok, penulis): # fungsi untuk memasukkan objek buku(logikanya sama dengan fungsi siswa)
+        # kode di bawah ini untuk mengecek apakah buku dengan judul yang sama sudah masuk. Jika sudah masuk tinggal menambah stoknya
+        for buku in self.daftar_buku:
+            if buku.judul == judul:
+                buku.stok += stok
+                self.simpan_data_buku()
+                print(f"🟢 Buku '{buku.judul}' sudah ada. Stok berhasil ditambah menjadi {buku.stok}!")
+                return buku
+
+        # Jika belum,saya buat objek buku baru
+        buku_baru = Buku(judul, stok, penulis)
+        self.daftar_buku.append(buku_baru)
+        self.simpan_data_buku() # disimpan
+
+        # Konfirmasi keberhasilan
+        print(f"🟢 Sukses menambahkan buku baru: '{buku_baru.judul}' sebanyak {stok} eksampler.")
+        return buku_baru
+
+    def simpan_data_siswa(self, nama_file=FILE_SISWA): # fungsi untuk menyimpan data siswa
+        list_mentah = []
+        for siswa in self.daftar_siswa:
+            dict_siswa = {
+                "nama": siswa.nama,
+                "kelas": siswa.kelas,
+                "pinjaman": siswa.pinjaman,
+                "limit": siswa.limit
+            }
+            list_mentah.append(dict_siswa)
+
+        with open(nama_file, "w") as data_siswa:
+            json.dump(list_mentah, data_siswa, indent=4)
+
+    def simpan_data_buku(self, nama_file=FILE_BUKU): # fungsi untuk menyimpan data buku
+        list_mentah = []
+        for buku in self.daftar_buku:
+            dict_buku = {
+                "judul": buku.judul,
+                "penulis": buku.penulis,
+                "stok": buku.stok
+            }
+            list_mentah.append(dict_buku)
+
+        with open(nama_file, "w") as data_buku:
+            json.dump(list_mentah, data_buku, indent=4)
+
+    def load_data_all(self): # fungsi untuk mengubah data json ke objek lagi,baik siswa maupun buku
+        try:
+            with open(FILE_SISWA, "r") as data_file:
+                list_mentah = json.load(data_file)
+                for data in list_mentah:
+                    siswa = Siswa(nama=data["nama"], kelas=data["kelas"])
+                    siswa.pinjaman = data["pinjaman"]
+                    siswa.limit = data["limit"]
+                    self.daftar_siswa.append(siswa)
+        except FileNotFoundError:
+            pass
+
+        try:
+            with open(FILE_BUKU, "r") as data_file:
+                list_mentah = json.load(data_file)
+                for data in list_mentah:
+                    buku = Buku(judul=data["judul"], stok=data["stok"], penulis=data["penulis"])
+                    self.daftar_buku.append(buku)
+        except FileNotFoundError:
+            pass
+
+
+# Masuk ke bagian fitur perpustakaan
+
+    def cari_buku(self): #1. mencari buku
+        print("=" * 15, "CARI BUKU", "=" * 15)
+
+        keyword = input("Masukkan judul atau kata kunci buku yang dicari: ").title() # Mencarinya cukup menggunakan judul buku
+
+        # saya mencoba membuatnya seolah-olah bisa menebak apa yang diinginkan user. Jika user mengetik kalkulus,bisa saja ada buku yang namanya kalkulus dasar
+
+        hasil_pencarian = []
+
+        for buku in self.daftar_buku:
+            if keyword in buku.judul:
+                hasil_pencarian.append(buku)
+
+        if not hasil_pencarian:
+            print(f"❌ Buku dengan kata kunci '{keyword}' tidak ditemukan.\n")
+            return None
+
+        # konfirmasi keberhasilan
+        print(f"\n📚 Ditemukan {len(hasil_pencarian)} buku yang cocok:")
+        print("-" * 50)
+
+        # spesifikasi buku yang ditemukan
+        for urutan, buku in enumerate(hasil_pencarian, 1):
+            print(f"{urutan}. Judul   : {buku.judul}")
+            print(f"   Penulis : {buku.penulis}")
+            print(f"   Stok    : {buku.stok} eksemplar")
+            print("-" * 50)
+        print()
+
+        return hasil_pencarian
+
+    def pinjam_buku(self):#2 pinjam-meminjam buku
+        print("=" * 15, "PINJAM BUKU", "=" * 15)
+        nama = input("Masukkan nama lengkap kamu: ").title() # verifikasi keanggotaan
+        judul = input("Masukkan judul buku yang ingin kamu pinjam: ").title() # judul buku yang dicari
+
+        # verifikasi keanggotaan siswa
+        siswa_peminjam = None
+        for siswa in self.daftar_siswa:
+            if siswa.nama == nama:
+                siswa_peminjam = siswa
+                break
+
+        if siswa_peminjam is None:
+            print("❌ Nama siswa tidak ditemukan. Tidak bisa meminjam buku!\n")
+            return
+
+        # verifikasi buku
+        buku_dicari = None
+        for buku in self.daftar_buku:
+            if buku.judul == judul:
+                buku_dicari = buku
+                break
+
+        if buku_dicari is None:
+            print("❌ Buku yang kamu ingin pinjam tidak terdaftar di perpustakaan!\n")
+            return
+
+        # Logika peminjaman(setiap siswa hanya boleh meminjam maks 2 buku)
+        if siswa_peminjam.limit <= 0:
+            print(f"❌ Slot pinjaman {siswa_peminjam.nama} sudah habis! Maksimal cuma 2 buku.\n")
+            return
+        # Logika peminjaman(jika stok buku habis tentu tidak bisa meminjam buku tsb)
+        if buku_dicari.stok <= 0:
+            print(f"❌ Stok buku '{buku_dicari.judul}' sedang habis! Silahkan kembali besok.\n")
+            return
+        # Logika peminjaman(tidak boleh meminjam buku yang sama)
+        if buku_dicari.judul in siswa_peminjam.pinjaman:
+            print(f"⚠️ Kamu sudah meminjam buku '{buku_dicari.judul}' dan belum dikembalikan!\n")
+            return
+
+        buku_dicari.stok -= 1
+        siswa_peminjam.limit -= 1
+        siswa_peminjam.pinjaman.append(buku_dicari.judul)
+
+
+        # konfirmasi keberhasilan
+        print(f"🟢 BERHASIL! '{buku_dicari.judul}' sukses dipinjam oleh {siswa_peminjam.nama} kelas {siswa_peminjam.kelas}.")
+        print(f"📊 Sisa slot pinjaman kamu: {siswa_peminjam.limit} buku.\n")
+
+        self.simpan_data_siswa() # jgn lupa disimpan
+        self.simpan_data_buku()  # ini juga
+
+    def kembalikan_buku(self): #3. mengembalikan buku
+        print("=" * 15, "PENGEMBALIAN BUKU", "=" * 15)
+        nama = input("Masukkan nama lengkap kamu: ").title() # nama siswa
+        judul = input("Masukkan judul buku yang ingin kamu kembalikan: ").title() # judul buku yang ingin dipinjam
+
+        # verifikasi siswa
+        siswa_pengembali = None
+        for siswa in self.daftar_siswa:
+            if siswa.nama == nama:
+                siswa_pengembali = siswa
+                break
+
+        if siswa_pengembali is None:
+            print("❌ Nama kamu tidak terdaftar!\n")
+            return
+
+        # Logika pengembalian(yang harus mengembalikan buku harus siswa yang meminjam)
+        if judul not in siswa_pengembali.pinjaman:
+            print(f"❌ Kamu tidak tercatat sedang meminjam buku '{judul}'!\n")
+            return
+
+        # verifikasi buku
+        buku_dikembalikan = None
+        for buku in self.daftar_buku:
+            if buku.judul == judul:
+                buku_dikembalikan = buku
+                break
+
+        if buku_dikembalikan is None:
+            print("❌ Buku tidak terdaftar!\n")
+            return
+        # logika pengembalian
+        buku_dikembalikan.stok += 1
+        siswa_pengembali.limit += 1
+        # Konfirmasi keberhasilan
+        siswa_pengembali.pinjaman.remove(buku_dikembalikan.judul)
+        print(f"🟢 Terima kasih telah meminjam buku {buku_dikembalikan.judul}!")
+        print("Kembalilah kapan-kapan!\n")
+
+        self.simpan_data_buku() # simpan perubahan
+        self.simpan_data_siswa() # simpan perubahan
+
+
+# ================= RUNNER UTAMA =================
+perpus = Perpus("Perpustakaan Sekolah")
+
+
+
+
+perpus.load_data_all()
+
+while True:
+    print("=" * 60)
+    print("SELAMAT DATANG DI PERPUSTAKAAN".center(55))
+    print("=" * 60)
+    print("1. Cari Buku")
+    print("2. Pinjam Buku")
+    print("3. Kembalikan Buku")
+    print("4. Keluar")
+    print("=" * 60)
+
+    try:
+        pilihan = int(input("Masukkan pilihan Anda: "))
+        print()
+        if pilihan == 1:
+            perpus.cari_buku() # panggil fungsi mencari buku jika pilihan user 1
+        elif pilihan == 2:
+            perpus.pinjam_buku() # panggil fungsi pinjam buku jika pilihan user 2
+        elif pilihan == 3:
+            perpus.kembalikan_buku() # panggil fungsi mengembalikan buku jika pilihan user 3
+        elif pilihan == 4:
+            perpus.simpan_data_buku() # jika pilihan user 4,simpan dulu perubahan pada siswa dan buku
+            perpus.simpan_data_siswa()
+            print("Terima kasih telah mengunjungi perpustakaan!")
+            break
+        else:
+            print("⚠️ Silahkan pilih opsi 1 - 4\n") # kode keamanan input tambahan
+
+    except ValueError:
+        print("⚠️ Pilihan tidak valid. Silahkan pilih menggunakan angka!\n") # kode keamanan input tambahan
