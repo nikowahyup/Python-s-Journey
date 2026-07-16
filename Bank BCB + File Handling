@@ -1,0 +1,273 @@
+import json
+import random
+
+
+class Nasabah: # cetak untuk membuat nasabah baru
+
+    def __init__(self, nama, pin, no_rek): # nasabah akan memiliki 3 atribut
+        self.nama = nama
+        self.pin = pin
+        self.no_rek = no_rek
+        self.saldo = 0 # untuk awalan,seluruh saldo nasabah bernilai 0 rupiah
+
+
+class Bank: # cetak untuk bank sekaligus semua fiturnya
+    def __init__(self, nama):
+        self.nama = nama
+        self.daftar_nasabah = {} # seluruh nasabah akan disimpan dalam dictionary
+
+    def tambah_nasabah(self, nama, pin): # fungsi untuk menambah nasabah
+        # cara saya membuat rekening untuk nasabah baru
+        while True:
+            angka_acak = random.randint(1000000000000000, 9999999999999999)
+            no_rek = str(angka_acak)  # Gembok RAM berupa STRING
+            if no_rek not in self.daftar_nasabah:
+                break
+
+        nasabah_baru = Nasabah(nama, pin, no_rek) # di sini juga saya membuat objek nasabah baru
+        rek_strip = (
+            f"{no_rek[0:4]}-{no_rek[4:8]}-{no_rek[8:12]}-{no_rek[12:16]}" # format agar rekening terlihat seperti aslinya saja
+        )
+
+        # Konfirmasi keanggotaan sekaligus ucapan selamat datang
+        print(f"\n🟢 Selamat Datang {nasabah_baru.nama}!")
+        print(f"💳 {rek_strip} adalah nomor rekening Anda!")
+        print(f"🔑 PIN Anda: {nasabah_baru.pin} (Tolong disimpan!)\n")
+
+        self.daftar_nasabah[no_rek] = nasabah_baru # saya formatkan no.rekening sebagai key dan objek nasabah sebagai valuenya
+        self.simpan_json() # tidak lupa saya simpan
+        return nasabah_baru
+
+    def simpan_json(self, nama_file="database_bank.json"): # fungsi untuk menyimpan setiap data nasabah
+        list_mentah = []
+        for nasabah in self.daftar_nasabah.values(): # karena nasabah sebagai value,tentu menggunakan method.values()
+            dict_nasabah = {
+                "Nama": nasabah.nama,
+                "Saldo": nasabah.saldo,
+                "PIN": nasabah.pin,
+                "NO REK": nasabah.no_rek,
+            }
+            list_mentah.append(dict_nasabah)
+
+        with open(nama_file, "w") as bank_file:
+            json.dump(list_mentah, bank_file, indent=4)
+
+    def ubah_ke_objek(self, nama_file="database_bank.json"): # fungsi untuk mengunggah kembali dari json menjadi objek
+        try:
+            with open(nama_file, "r") as data_file:
+                list_mentah = json.load(data_file)
+                for data in list_mentah:
+                    objek_nasabah = Nasabah(
+                        nama=data["Nama"],
+                        pin=data["PIN"],
+                        no_rek=data["NO REK"],
+                    )
+                    objek_nasabah.saldo = data.get("Saldo", 0)
+
+                    self.daftar_nasabah[objek_nasabah.no_rek] = objek_nasabah
+        except FileNotFoundError:
+            print(
+                "⚠️ [SISTEM] File database tidak ditemukan. Memulai dengan database kosong...\n"
+            )
+
+    # Masuk ke bagian fitur bank
+
+    def tambah_saldo(self): #1. menambah saldo
+        print("="*15,"TAMBAH SALDO","="*15)
+        while True:
+            rek = input("Masukkan Nomor Rekening Anda: ") # untuk menambah saldo,perlu mengecek no.rekening
+
+            if rek not in self.daftar_nasabah: # no.rek sebagai key dict.daftar_nasabah. Apabila tidak ditemukan,fungsi akan berhenti
+                print("❌ Nomor Rekening tidak terdaftar!\n")
+                break
+
+            nasabah = self.daftar_nasabah[rek]
+            # apabila no.rekening ditemukan,saya membuat verifikasi kedua--pin pemilik no.rekening
+            pin_input = int(input("Masukkan PIN Anda: "))
+            if nasabah.pin != pin_input: # apabila tidak cocok kembali,fungsi langsung berhenti
+                print("❌ PIN salah. Akses ditolak!\n")
+                break
+            #sapaan,konfirmasi bahwa memang benar pemilik akun
+            print(f"Halo {nasabah.nama}!")
+            nominal = int(
+                input("Masukkan nominal saldo yang ingin Anda tambahkan: ")
+            )
+            if nominal < 10000: # minimal top-up bank saya adalah 10.000
+                print("⚠️ Minimal Top-up adalah Rp10.000!\n")
+                break
+
+            nasabah.saldo += nominal
+            rupiah = f'{nominal:,}'.replace(",",".") # variabel untuk mempercantik format uang
+            saldo_rupiah = f"{nasabah.saldo:,}".replace(",", ".") # variabel untuk mempercantik format uang
+
+            # konfirmasi keberhasilan
+            print(f"\n🟢 Top Up berhasil! Rp{rupiah} masuk ke akun Anda!")
+            print(f"Saldo sekarang: Rp{saldo_rupiah}\n")
+
+            self.simpan_json() # tak lupa disimpan perubahan pada nasabah
+            break
+
+
+    def cek_saldo(self): #2. cek saldo
+        print("="*15,"CEK SALDO","="*15)
+        while True:
+            rek = input("Masukkan Nomor Rekening Anda: ") # seperti biasa,pengecekan menggunakan no.rekening
+            if rek not in self.daftar_nasabah:
+                print("❌ Nomor Rekening tidak terdaftar!\n")
+                break
+
+            nasabah = self.daftar_nasabah[rek]
+
+            # jika no.rekening terdaftar
+            saldo_rupiah = f"{nasabah.saldo:,}".replace(",", ".")
+            print(f"Halo {nasabah.nama}! Saldo Anda saat ini Rp{saldo_rupiah}\n")
+            break
+
+    def tarik_saldo(self):#3. Tarik Uang
+        print("="*15,"TARIK TUNAI","="*15)
+        while True:
+            rek = input("Masukkan Nomor Rekening Anda: ") # pengecekan
+            if rek not in self.daftar_nasabah:
+                print("❌ Nomor Rekening tidak terdaftar!\n")
+                break
+
+            nasabah = self.daftar_nasabah[rek]
+
+            pin_input = int(input("Masukkan PIN Anda: ")) # pengecekan kedua
+            if nasabah.pin != pin_input:
+                print("❌ PIN salah. Akses ditolak!\n")
+                break
+            # konfirmasi pemilik akun
+            print(f"Halo {nasabah.nama}!")
+            jumlah = int(input("Masukkan nominal yang ingin Anda tarik: "))
+            if jumlah < 10000: # minimal tarik tunai bank saya
+                print("⚠️ Minimal Tarik tunai adalah Rp10.000!\n")
+                break
+
+            # logika tarik uang
+            elif jumlah > nasabah.saldo:
+                print("❌ Saldo Anda tidak cukup!\n")
+                break
+            else:
+                nasabah.saldo -= jumlah
+                saldo_rupiah = f"{nasabah.saldo:,}".replace(",", ".") # format uang
+
+                #konfirmasi keberhasilan
+                print(f"\n🟢 Penarikan berhasil!")
+                print(f"Saldo Anda kini Rp{saldo_rupiah}\n")
+
+                self.simpan_json() # simpan perubahan
+                break
+
+    def transfer(self): #4. Transfer antar-akun
+        print("="*15,'TRANSFER SALDO',"="*15)
+
+        rek = input("Silahkan masukkan nomor rekening pengirim: ") # pengecekan pengirim
+        if rek not in self.daftar_nasabah:
+            print("❌ Nomor rekening tidak terdaftar!")
+            return
+
+        pengirim = self.daftar_nasabah[rek]
+        print(f"Halo {pengirim.nama}!")
+
+        pin_input = int(input("Masukkan PIN Anda: ")) # pengecekan pengirim kedua
+        if pengirim.pin != pin_input:
+            print("❌ PIN salah. Transaksi dibatalkan!")
+            return
+
+
+        rek_penerima = input("Silahkan masukkan nomor rekening penerima: ") # pengecekan penerima
+
+        if rek_penerima == rek:
+            print("⚠️ Tidak bisa mentransfer ke akun sendiri!")
+            return
+
+        if rek_penerima not in self.daftar_nasabah:
+            print("❌ Nomor rekening yang dituju tidak ditemukan!")
+            return
+
+        penerima = self.daftar_nasabah[rek_penerima]
+
+
+        jumlah = int(input("Masukkan nominal yang ingin Anda transfer: "))
+        if jumlah < 10000: # minimal transfer bank saya
+            print("⚠️ Minimal transfer adalah Rp10.000")
+            return
+
+        # logika transfer
+        if jumlah > pengirim.saldo:
+            print("❌ Saldo Anda tidak cukup!")
+            return
+
+        penerima.saldo += jumlah
+        pengirim.saldo -= jumlah
+
+        # Format Rupiah biar cantik
+        saldo_terkirim = f"{jumlah:,}".replace(",",".")
+        saldo_akhir = f"{pengirim.saldo:,}".replace(",", ".")
+
+        # konfirmasi keberhasilan
+        print(f"\n🟢 Berhasil transfer Rp{saldo_terkirim} ke akun {penerima.nama}!".replace(",", "."))
+        print(f"💰 Sisa saldo Anda Rp{saldo_akhir}\n")
+
+
+        self.simpan_json() # simpan perubahan
+
+# ================= RUNNER MENU UTAMA =================
+
+bank = Bank("Bank BCB")
+bank.ubah_ke_objek() # memuat semua data menjadi objek kembali
+while True:
+    print("=" * 68)
+    print("Selamat Datang di Bank BCB".center(65))
+    print("=" * 68)
+    print("1. Daftar Jadi Nasabah")
+    print("2. Cek Saldo")
+    print("3. Tambah Saldo")
+    print("4. Tarik Tunai")
+    print('5. Transfer Uang')
+    print("6. Keluar")
+    print("=" * 68)
+
+    try:
+        pilihan = int(input("Masukkan pilihan Anda: ")) # pilihan user
+        print()
+
+        if pilihan == 1:
+            Nama = input("Masukkan nama lengkap Anda: ").title() # sebagai argumen "nama" fungsi tambah_nasabah saya
+            # Validasi input PIN biar beneran angka pas didaftarin
+            Pin = input("Buat PIN Anda (6 digit angka): ") # sebagai argumen "pin" fungsi tambah_nasabah saya,dengan persyaratannya
+            if len(Pin) > 6:
+                print("Silahkan buat pin 6 digit.")
+            elif len(Pin) < 6:
+                print("Silahkan buat pin 6 digit.")
+            else:
+                Pin = int(Pin)
+                bank.tambah_nasabah(Nama, Pin) # jika berhasil,panggil fungsi tambah_nasabah
+        elif pilihan == 2:
+            bank.cek_saldo() # panggil fungsi cek saldo jika pilihan user 2
+        elif pilihan == 3:
+            bank.tambah_saldo() # panggil fungsi tambah saldo jika pilihan user 3
+        elif pilihan == 4:
+            bank.tarik_saldo() # panggil fungsi tarik tunai jika pilihan user 4
+        elif pilihan == 5:
+            bank.transfer() # panggil fungsi transfer jika pilihan user 5
+        elif pilihan == 6:
+            bank.simpan_json() # jika user memilihh 6,tandanya program akan berhenti. Simpan semua perubahan sebelum program mati
+            print("Terima Kasih Telah Mengunjungi Bank BCB!")
+            break
+        else:
+            print("⚠️ Silahkan Masukkan Opsi yang Valid!\n") # kode keamanan input tambahan
+
+    except ValueError:
+        print("⚠️ Silahkan Pilih Opsi Menggunakan Angka dengan Benar!\n") # kode keamanan input tambahan
+
+
+
+
+
+
+
+
+
+
