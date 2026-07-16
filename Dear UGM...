@@ -1,0 +1,48 @@
+class PesertaUTBK:
+    def __init__(self, nama, skor_kuantitatif, skor_penalaran):
+        self.nama = nama.upper()
+        self.skor_k = skor_kuantitatif
+        self.skor_p = skor_penalaran
+        self.status_kelulusan = "PENDING"
+
+
+class SistemSeleksiUGM:
+    def __init__(self, kuota_diterima, passing_grade_minimal):
+        self.kuota = kuota_diterima
+        self.pg_minimal = passing_grade_minimal
+        self.jumlah_lolos_saat_ini = 0  # Counter untuk membatasi kuota
+
+    def proses_kelulusan(self, objek_peserta):
+
+
+        peserta = objek_peserta
+        rata_rata = round((peserta.skor_k + peserta.skor_p)/2)
+        if rata_rata < self.pg_minimal:
+            peserta.status_kelulusan = "GAGAL"
+            print(f"{peserta.nama} GAGAL! SKOR DI BAWAH PASSING GRADE.")
+            return
+        if self.jumlah_lolos_saat_ini >= self.kuota:
+            peserta.status_kelulusan = "GAGAL(KUOTA HABIS)"
+            print(f'{peserta.nama} GAGAL! KUOTA JURUSAN SUDAH PENUH.')
+            return
+
+        peserta.status_kelulusan = "LOLOS UGM🎉"
+        self.jumlah_lolos_saat_ini += 1
+        print(f"SELAMAT! {peserta.nama} DINYATAKAN LOLOS ILMU KOMPUTER UGM!")
+
+
+if __name__ == "__main__":
+
+    panitia_ugm = SistemSeleksiUGM(kuota_diterima=2, passing_grade_minimal=700)
+
+    # Pendaftar datang bergantian
+    peserta_1 = PesertaUTBK("Budi", 650, 680)
+    peserta_2 = PesertaUTBK("Niko Wahyu", 780, 760)  #
+    peserta_3 = PesertaUTBK("Siti", 740, 720)
+    peserta_4 = PesertaUTBK("Andi", 800, 820)
+
+    print("=== PROSES SELEKSI DIMULAI ===")
+    panitia_ugm.proses_kelulusan(peserta_1)
+    panitia_ugm.proses_kelulusan(peserta_2)
+    panitia_ugm.proses_kelulusan(peserta_3)
+    panitia_ugm.proses_kelulusan(peserta_4)
