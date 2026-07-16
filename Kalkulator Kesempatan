@@ -1,0 +1,299 @@
+import random
+import time
+
+
+
+           
+simbol = ["🏆"]*1 + ["⭐"]*2 + ["🔔"]*3 + ["🍉"]*4 + ["🍒"]*5
+
+
+nilai_simbol = {"🏆": 1000,"⭐":40,"🔔":20,"🍉":10,"🍒":5}
+
+mintaruhan = 1
+maxtaruhan = 100
+saldo = 0
+main = 0
+menang = 0
+kalah = 0
+
+def mesinputar():
+    return [random.choice(simbol) for _ in range(3)]
+    
+
+def hasilputar(putaran):
+    print("=============")
+    print(" | ".join(putaran))
+    print("=============")
+
+def bayar(putaran,taruhan):
+    if putaran[0]==putaran[1]==putaran[2]:
+        simbol = putaran[0]
+        return taruhan * nilai_simbol[simbol]
+    return 0
+def animasi():
+    print("Memutar", end="")
+    for _ in range(3):
+        print(".", end="", flush=True)
+        time.sleep(1)
+    print("\n")
+    
+print("      *********************")
+print("        IDLE DEATH GAMBLE")
+print("      *********************")
+print()
+
+print("Selamat Datang")
+print("Dapatkan 3 Simbol Sama Untuk Menang")
+print("Simbol : 🏆|⭐|🔔|🍉|🍒")
+print()
+print("🏆 3x : uang taruhan x 1000 (jackpot)")
+print("⭐ 3x : uang taruhan x 40")
+print("🔔 3x : uang taruhan x 20")
+print("🍉 3x : uang taruhan x 10")
+print("🍒 3x : uang taruhan x 5")
+print()
+while True:
+    print()
+    print(f"Uang Anda saat ini ${saldo} ")
+    if saldo <= 0:
+        tanya = input("Apakah Anda ingin menambah saldo(y/t): ")
+        if tanya == "y":
+            jumlah = int(input("Berapa saldo yang ingin Anda tambahkan: $"))
+            saldo += jumlah
+            print("Berhasil ditambahkan")
+        elif tanya == "t":
+            print("Baiklah")
+            break
+
+    taruhan = int(input("Berapa uang yang ingin Anda taruhkan: $"))
+    main += 1
+    if taruhan < mintaruhan:
+        print("Taruhan minimal $1 ")
+        continue
+    elif taruhan > maxtaruhan:
+        print("Taruhan maksimal $100")
+        continue
+    elif taruhan > saldo:
+        print("Saldo Anda tidak cukup")
+        isi = input("Mau isi saldo(y/t): ")
+        if isi == "y":
+            tambahan = int(input("Mau isi berapa: "))
+            saldo += tambahan
+        elif isi == "t":
+            print("Karena kamu sudah kehabisan uang,kamu dipaksa keluar")
+            break
+
+    print()
+    saldo -= taruhan
+    animasi()
+
+    putaran = mesinputar()
+    hasilputar(putaran)
+    hasil = bayar(putaran,taruhan)
+    print()
+    if hasil > 0:
+     print(f"Selamat Kamu Menang ${hasil}")
+     saldo += hasil
+     menang += 1
+    
+    else:
+        print("Kamu kalah di ronde ini")
+        kalah += 1
+    
+    lagi = input("Mau main lagi(y/t): ")
+    if lagi == "t":
+        
+        
+        print("==========================")
+        print("Terima Kasih Sudah Bermain")
+        print(f"Total Main   : {main} kali")
+        print(f"Total Menang : {menang} kali")
+        print(f"Total kalah  : {kalah} kali")
+        break
+
+
+
+class Mahasiswa:
+    # Constructor / __init__
+    def __init__(self, nama, nim, jurusan):
+        self.nama = nama
+        self.nim = nim
+        self.jurusan = jurusan
+        self.mata_kuliah = []
+        self.nilai = {}
+    
+    # Method untuk menambah mata kuliah
+    def tambah_matkul(self, matkul, nilai):
+        self.mata_kuliah.append(matkul)
+        self.nilai[matkul] = nilai
+    
+    # Method untuk menghitung IPK
+    def hitung_ipk(self):
+        if not self.nilai:
+            return 0.0
+        
+        total_nilai = sum(self.nilai.values())
+        return round(total_nilai / len(self.nilai), 2)
+    
+    # Method untuk mengecek kelulusan
+    def status_kelulusan(self):
+        ipk = self.hitung_ipk()
+        if ipk >= 3.0:
+            return "LULUS"
+        elif ipk >= 2.0:
+            return "CONDONG LULUS"
+        else:
+            return "TIDAK LULUS"
+    
+    # Method untuk menampilkan profil
+    def tampilkan_profil(self):
+        print(f"\n=== PROFIL MAHASISWA ===")
+        print(f"Nama     : {self.nama}")
+        print(f"NIM      : {self.nim}")
+        print(f"Jurusan  : {self.jurusan}")
+        print(f"IPK      : {self.hitung_ipk()}")
+        print(f"Status   : {self.status_kelulusan()}")
+        
+        if self.mata_kuliah:
+            print("\nDaftar Mata Kuliah:")
+            for matkul in self.mata_kuliah:
+                print(f"  - {matkul}: {self.nilai[matkul]}")
+        else:
+            print("\nBelum mengambil mata kuliah")
+    
+    # Method getter (encapsulation)
+    def get_nama(self):
+        return self.nama
+    
+    def get_ipk(self):
+        return self.hitung_ipk()
+
+
+class Kelas:
+    def __init__(self, nama_kelas):
+        self.nama_kelas = nama_kelas
+        self.daftar_mahasiswa = []
+    
+    def tambah_mahasiswa(self, mahasiswa):
+        self.daftar_mahasiswa.append(mahasiswa)
+        print(f"✅ {mahasiswa.nama} ditambahkan ke kelas {self.nama_kelas}")
+    
+    def tampilkan_semua_mahasiswa(self):
+        print(f"\n{'='*50}")
+        print(f"KELAS {self.nama_kelas}")
+        print(f"{'='*50}")
+        
+        if not self.daftar_mahasiswa:
+            print("Belum ada mahasiswa di kelas ini")
+            return
+        
+        for mhs in self.daftar_mahasiswa:
+            mhs.tampilkan_profil()
+            print("-" * 30)
+    
+    def rata_rata_ipk_kelas(self):
+        if not self.daftar_mahasiswa:
+            return 0.0
+        
+        total_ipk = sum(mhs.hitung_ipk() for mhs in self.daftar_mahasiswa)
+        return round(total_ipk / len(self.daftar_mahasiswa), 2)
+
+
+# === PROGRAM UTAMA ===
+def main():
+    # Membuat objek Mahasiswa
+    mhs1 = Mahasiswa("Budi Santoso", "2023001", "Teknik Informatika")
+    mhs2 = Mahasiswa("Sari Dewi", "2023002", "Sistem Informasi")
+    mhs3 = Mahasiswa("Ahmad Fauzi", "2023003", "Teknik Informatika")
+    
+    # Menambah mata kuliah dan nilai
+    mhs1.tambah_matkul("Pemrograman Python", 3.5)
+    mhs1.tambah_matkul("Struktur Data", 3.0)
+    mhs1.tambah_matkul("Database", 3.8)
+    
+    mhs2.tambah_matkul("Pemrograman Web", 3.2)
+    mhs2.tambah_matkul("Analisis Sistem", 2.8)
+    
+    mhs3.tambah_matkul("Algoritma", 4.0)
+    mhs3.tambah_matkul("Jaringan Komputer", 3.7)
+    
+    # Membuat kelas dan menambah mahasiswa
+    kelas_ti = Kelas("TI-01")
+    kelas_ti.tambah_mahasiswa(mhs1)
+    kelas_ti.tambah_mahasiswa(mhs3)
+    
+    kelas_si = Kelas("SI-01")
+    kelas_si.tambah_mahasiswa(mhs2)
+    
+    # Menampilkan hasil
+    kelas_ti.tampilkan_semua_mahasiswa()
+    print(f"\nRata-rata IPK Kelas TI-01: {kelas_ti.rata_rata_ipk_kelas()}")
+    
+    kelas_si.tampilkan_semua_mahasiswa()
+    print(f"\nRata-rata IPK Kelas SI-01: {kelas_si.rata_rata_ipk_kelas()}")
+
+
+# Jalankan program
+if __name__ == "__main__":
+    main()
+
+
+class Siswa:
+    def __init__(self, nama, kelas):
+        self.nama = nama
+        self.kelas = kelas
+        self.pinjam = []
+        self.limit = 2
+
+class Buku:
+    def __init__(self,judul,nama_penulis,halaman,stok):
+        self.judul = judul
+        self.nama_penulis = nama_penulis
+        self.halaman = halaman
+        self.stok = stok
+
+
+    def kondisi(self):
+        status = "Tersedia" if self.stok > 0 else "Habis dipinjam"
+        print(f"Judul Buku     : {self.judul}")
+        print(f"Nama Penulis   : {self.nama_penulis}")
+        print(f"Jumlah Halaman : {self.halaman}")
+        print(f"Stok : {status}")
+
+class Perpus:
+    def __init__(self):
+        self.daftar_buku = []
+        self.daftar_siswa = []
+
+    def tambahbuku(self,buku):
+        self.daftar_buku.append(buku)
+        print(f"{buku} berhasil ditambahkan")
+
+    def tambahsiswa(self,siswa):
+        self.daftar_siswa.append(siswa)
+        print(f"{siswa} berhasil ditambahkan dalam daftar anggota")
+
+    def caribuku(self,judul):
+        for buku in self.daftar_buku:
+            if buku.judul == judul:
+                return buku
+
+    def carisiswa(self,siswa):
+        for siswa in self.daftar_siswa:
+            if siswa.nama == siswa:
+                return siswa
+
+
+    def pinjambuku(self,buku,siswa):
+        if buku is None:
+            print("Buku tidak ditemukan")
+            return
+
+        if siswa is None:
+            print("Siswa tidak terdaftar")
+            return
+
+
+
+
+        
