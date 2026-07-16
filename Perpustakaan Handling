@@ -1,0 +1,255 @@
+import json
+import os
+
+# Deteksi folder project agar file JSON terbuat di tempat yang benar
+FOLDER_PROJECT = os.path.dirname(os.path.abspath(__file__))
+FILE_SISWA = os.path.join(FOLDER_PROJECT, "data siswa.json")
+FILE_BUKU = os.path.join(FOLDER_PROJECT, "data buku.json")
+
+
+class Siswa:
+    def __init__(self, nama, kelas):
+        self.nama = nama.title()
+        self.kelas = kelas
+        self.pinjaman = []
+        self.limit = 2
+
+
+class Buku:
+    def __init__(self, judul, stok, penulis):
+        self.judul = judul.title()
+        self.penulis = penulis.title()
+        self.stok = stok
+
+
+class Perpus:
+    def __init__(self, nama):
+        self.nama = nama.title()
+        self.daftar_siswa = []
+        self.daftar_buku = []
+
+    def tambah_siswa(self, nama, kelas):
+        for siswa in self.daftar_siswa:
+            if siswa.nama == nama and siswa.kelas == kelas:
+                print(f"⚠️ Siswa bernama {nama} di kelas {kelas} sudah terdaftar!")
+                return siswa
+
+        siswa_baru = Siswa(nama, kelas)
+        self.daftar_siswa.append(siswa_baru)
+        self.simpan_data_siswa()
+        print(f"🟢 Sukses mendaftarkan siswa: {siswa_baru.nama} ({siswa_baru.kelas})")
+        return siswa_baru
+
+    def tambah_buku(self, judul, stok, penulis):
+        for buku in self.daftar_buku:
+            if buku.judul == judul:
+                buku.stok += stok
+                self.simpan_data_buku()
+                print(f"🟢 Buku '{buku.judul}' sudah ada. Stok berhasil ditambah menjadi {buku.stok}!")
+                return buku
+
+        buku_baru = Buku(judul, stok, penulis)
+        self.daftar_buku.append(buku_baru)
+        self.simpan_data_buku()
+        print(f"🟢 Sukses menambahkan buku baru: '{buku_baru.judul}' sebanyak {stok} eksampler.")
+        return buku_baru
+
+    def simpan_data_siswa(self, nama_file=FILE_SISWA):
+        list_mentah = []
+        for siswa in self.daftar_siswa:
+            dict_siswa = {
+                "nama": siswa.nama,
+                "kelas": siswa.kelas,
+                "pinjaman": siswa.pinjaman,
+                "limit": siswa.limit
+            }
+            list_mentah.append(dict_siswa)
+
+        with open(nama_file, "w") as data_siswa:
+            json.dump(list_mentah, data_siswa, indent=4)
+
+    def simpan_data_buku(self, nama_file=FILE_BUKU):
+        list_mentah = []
+        for buku in self.daftar_buku:
+            dict_buku = {
+                "judul": buku.judul,
+                "penulis": buku.penulis,
+                "stok": buku.stok
+            }
+            list_mentah.append(dict_buku)
+
+        with open(nama_file, "w") as data_buku:
+            json.dump(list_mentah, data_buku, indent=4)
+
+    def load_data_all(self):
+        try:
+            with open(FILE_SISWA, "r") as data_file:
+                list_mentah = json.load(data_file)
+                for data in list_mentah:
+                    siswa = Siswa(nama=data["nama"], kelas=data["kelas"])
+                    siswa.pinjaman = data["pinjaman"]
+                    siswa.limit = data["limit"]
+                    self.daftar_siswa.append(siswa)
+        except FileNotFoundError:
+            pass
+
+        try:
+            with open(FILE_BUKU, "r") as data_file:
+                list_mentah = json.load(data_file)
+                for data in list_mentah:
+                    buku = Buku(judul=data["judul"], stok=data["stok"], penulis=data["penulis"])
+                    self.daftar_buku.append(buku)
+        except FileNotFoundError:
+            pass
+
+    def cari_buku(self):
+        print("=" * 15, "CARI BUKU", "=" * 15)
+        # 🟢 FIXED: Tambahin tanda kurung () pada .title()
+        keyword = input("Masukkan judul atau kata kunci buku yang dicari: ").title()
+
+        hasil_pencarian = []
+
+        for buku in self.daftar_buku:
+            # 🟢 FIXED: Pakai .lower() saat membandingkan agar pencarian kata kunci fleksibel
+            if keyword in buku.judul:
+                hasil_pencarian.append(buku)
+
+        if not hasil_pencarian:
+            print(f"❌ Buku dengan kata kunci '{keyword}' tidak ditemukan.\n")
+            return None
+
+        print(f"\n📚 Ditemukan {len(hasil_pencarian)} buku yang cocok:")
+        print("-" * 50)
+        for urutan, buku in enumerate(hasil_pencarian, 1):
+            print(f"{urutan}. Judul   : {buku.judul}")
+            print(f"   Penulis : {buku.penulis}")
+            print(f"   Stok    : {buku.stok} eksemplar")
+            print("-" * 50)
+        print()
+
+        return hasil_pencarian
+
+    def pinjam_buku(self):
+        print("=" * 15, "PINJAM BUKU", "=" * 15)
+        nama = input("Masukkan nama lengkap kamu: ").title()
+        judul = input("Masukkan judul buku yang ingin kamu pinjam: ").title()
+
+        siswa_peminjam = None
+        for siswa in self.daftar_siswa:
+            if siswa.nama == nama:
+                siswa_peminjam = siswa
+                break
+
+        if siswa_peminjam is None:
+            print("❌ Nama siswa tidak ditemukan. Tidak bisa meminjam buku!\n")
+            return
+
+        buku_dicari = None
+        for buku in self.daftar_buku:
+            if buku.judul == judul:
+                buku_dicari = buku
+                break
+
+        if buku_dicari is None:
+            print("❌ Buku yang kamu ingin pinjam tidak terdaftar di perpustakaan!\n")
+            return
+
+        if siswa_peminjam.limit <= 0:
+            print(f"❌ Slot pinjaman {siswa_peminjam.nama} sudah habis! Maksimal cuma 2 buku.\n")
+            return
+
+        if buku_dicari.stok <= 0:
+            print(f"❌ Stok buku '{buku_dicari.judul}' sedang habis! Silahkan kembali besok.\n")
+            return
+
+        if buku_dicari.judul in siswa_peminjam.pinjaman:
+            print(f"⚠️ Kamu sudah meminjam buku '{buku_dicari.judul}' dan belum dikembalikan!\n")
+            return
+
+        buku_dicari.stok -= 1
+        siswa_peminjam.limit -= 1
+        siswa_peminjam.pinjaman.append(buku_dicari.judul)
+
+        print(f"🟢 BERHASIL! '{buku_dicari.judul}' sukses dipinjam oleh {siswa_peminjam.nama} kelas {siswa_peminjam.kelas}.")
+        print(f"📊 Sisa slot pinjaman kamu: {siswa_peminjam.limit} buku.\n")
+
+        self.simpan_data_siswa()
+        self.simpan_data_buku()
+
+    def kembalikan_buku(self):
+        print("=" * 15, "PENGEMBALIAN BUKU", "=" * 15)
+        nama = input("Masukkan nama lengkap kamu: ").title()
+        judul = input("Masukkan judul buku yang ingin kamu kembalikan: ").title()
+
+        siswa_pengembali = None
+        for siswa in self.daftar_siswa:
+            if siswa.nama == nama:
+                siswa_pengembali = siswa
+                break
+
+        if siswa_pengembali is None:
+            print("❌ Nama kamu tidak terdaftar!\n")
+            return
+
+        # 🟢 FIXED LOGIC: Validasi apakah siswa beneran pinjam buku ini
+        if judul not in siswa_pengembali.pinjaman:
+            print(f"❌ Kamu tidak tercatat sedang meminjam buku '{judul}'!\n")
+            return
+
+        buku_dikembalikan = None
+        for buku in self.daftar_buku:
+            if buku.judul == judul:
+                buku_dikembalikan = buku
+                break
+
+        if buku_dikembalikan is None:
+            print("❌ Buku tidak terdaftar!\n")
+            return
+
+        buku_dikembalikan.stok += 1
+        siswa_pengembali.limit += 1
+        siswa_pengembali.pinjaman.remove(buku_dikembalikan.judul)
+        print(f"🟢 Terima kasih telah meminjam buku {buku_dikembalikan.judul}!")
+        print("Kembalilah kapan-kapan!\n")
+
+        self.simpan_data_buku()
+        self.simpan_data_siswa()
+
+
+# ================= RUNNER UTAMA =================
+perpus = Perpus("Perpustakaan Sekolah")
+
+
+
+
+perpus.load_data_all()
+
+while True:
+    print("=" * 60)
+    print("SELAMAT DATANG DI PERPUSTAKAAN".center(55))
+    print("=" * 60)
+    print("1. Cari Buku")
+    print("2. Pinjam Buku")
+    print("3. Kembalikan Buku")
+    print("4. Keluar")
+    print("=" * 60)
+
+    try:
+        pilihan = int(input("Masukkan pilihan Anda: "))
+        print()
+        if pilihan == 1:
+            perpus.cari_buku()
+        elif pilihan == 2:
+            perpus.pinjam_buku()
+        elif pilihan == 3:
+            perpus.kembalikan_buku()
+        elif pilihan == 4:
+            perpus.simpan_data_buku()
+            perpus.simpan_data_siswa()
+            print("Terima kasih telah mengunjungi perpustakaan!")
+            break
+        else:
+            print("⚠️ Silahkan pilih opsi 1 - 4\n")
+
+    except ValueError:
+        print("⚠️ Pilihan tidak valid. Silahkan pilih menggunakan angka!\n")
