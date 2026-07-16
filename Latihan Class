@@ -1,0 +1,122 @@
+class Mahasiswa:
+    def __init__(self, nama, nim, jurusan):
+        self.nama = nama
+        self.nim = nim
+        self.jurusan = jurusan
+        self.mata_kuliah = []
+        self.nilai = {}
+    
+    # Method untuk menambah mata kuliah
+    def tambah_matkul(self, matkul, nilai):
+        self.mata_kuliah.append(matkul)
+        self.nilai[matkul] = nilai
+    
+    # Method untuk menghitung IPK
+    def hitung_ipk(self):
+        if not self.nilai:
+            return 0.0
+        
+        total_nilai = sum(self.nilai.values())
+        return round(total_nilai / len(self.nilai), 2)
+    
+    # Method untuk mengecek kelulusan
+    def status_kelulusan(self):
+        ipk = self.hitung_ipk()
+        if ipk >= 3.0:
+            return "LULUS"
+        elif ipk >= 2.0:
+            return "CONDONG LULUS"
+        else:
+            return "TIDAK LULUS"
+    
+    # Method untuk menampilkan profil
+    def tampilkan_profil(self):
+        print(f"\n=== PROFIL MAHASISWA ===")
+        print(f"Nama     : {self.nama}")
+        print(f"NIM      : {self.nim}")
+        print(f"Jurusan  : {self.jurusan}")
+        print(f"IPK      : {self.hitung_ipk()}")
+        print(f"Status   : {self.status_kelulusan()}")
+        
+        if self.mata_kuliah:
+            print("\nDaftar Mata Kuliah:")
+            for matkul in self.mata_kuliah:
+                print(f"  - {matkul}: {self.nilai[matkul]}")
+        else:
+            print("\nBelum mengambil mata kuliah")
+    
+    # Method getter (encapsulation)
+    def get_nama(self):
+        return self.nama
+    
+    def get_ipk(self):
+        return self.hitung_ipk()
+
+
+class Kelas:
+    def __init__(self, nama_kelas):
+        self.nama_kelas = nama_kelas
+        self.daftar_mahasiswa = []
+    
+    def tambah_mahasiswa(self, mahasiswa):
+        self.daftar_mahasiswa.append(mahasiswa)
+        print(f"✅ {mahasiswa.nama} ditambahkan ke kelas {self.nama_kelas}")
+    
+    def tampilkan_semua_mahasiswa(self):
+        print(f"\n{'='*50}")
+        print(f"KELAS {self.nama_kelas}")
+        print(f"{'='*50}")
+        
+        if not self.daftar_mahasiswa:
+            print("Belum ada mahasiswa di kelas ini")
+            return
+        
+        for mhs in self.daftar_mahasiswa:
+            mhs.tampilkan_profil()
+            print("-" * 30)
+    
+    def rata_rata_ipk_kelas(self):
+        if not self.daftar_mahasiswa:
+            return 0.0
+        
+        total_ipk = sum(mhs.hitung_ipk() for mhs in self.daftar_mahasiswa)
+        return round(total_ipk / len(self.daftar_mahasiswa), 2)
+
+
+# === PROGRAM UTAMA ===
+def main():
+    # Membuat objek Mahasiswa
+    mhs1 = Mahasiswa("Budi Santoso", "2023001", "Teknik Informatika")
+    mhs2 = Mahasiswa("Sari Dewi", "2023002", "Sistem Informasi")
+    mhs3 = Mahasiswa("Ahmad Fauzi", "2023003", "Teknik Informatika")
+    
+    # Menambah mata kuliah dan nilai
+    mhs1.tambah_matkul("Pemrograman Python", 3.5)
+    mhs1.tambah_matkul("Struktur Data", 3.0)
+    mhs1.tambah_matkul("Database", 3.8)
+    
+    mhs2.tambah_matkul("Pemrograman Web", 3.2)
+    mhs2.tambah_matkul("Analisis Sistem", 2.8)
+    
+    mhs3.tambah_matkul("Algoritma", 4.0)
+    mhs3.tambah_matkul("Jaringan Komputer", 3.7)
+    
+    # Membuat kelas dan menambah mahasiswa
+    kelas_ti = Kelas("TI-01")
+    kelas_ti.tambah_mahasiswa(mhs1)
+    kelas_ti.tambah_mahasiswa(mhs3)
+    
+    kelas_si = Kelas("SI-01")
+    kelas_si.tambah_mahasiswa(mhs2)
+    
+    # Menampilkan hasil
+    kelas_ti.tampilkan_semua_mahasiswa()
+    print(f"\nRata-rata IPK Kelas TI-01: {kelas_ti.rata_rata_ipk_kelas()}")
+    
+    kelas_si.tampilkan_semua_mahasiswa()
+    print(f"\nRata-rata IPK Kelas SI-01: {kelas_si.rata_rata_ipk_kelas()}")
+
+
+# Jalankan program
+if __name__ == "__main__":
+    main()
